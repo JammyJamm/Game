@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-// import { saveRound as saveGameRound } from "./gameservice";
+import { saveRound as saveGameRound } from "./gameservice";
 
 export default function App() {
   const [status, setStatus] = useState("Idle");
@@ -36,7 +36,11 @@ export default function App() {
         // const time = Object.keys(lastEntry)[0];
         // const value = lastEntry[time];
 
-        // saveGameRound(today, timeArray);
+        // Firebase save data based on 10th ele or 11th ele
+        const ele10 = Object.values(timeArray[timeArray.length - 11]);
+        const firstStr = ele10.toString().split(".")[1]?.length || 0;
+        const getCompArr = timeArray.slice(-12);
+        if (firstStr === 1) saveGameRound(today, getCompArr);
       }
     } catch {}
   };
