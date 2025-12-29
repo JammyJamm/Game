@@ -1,13 +1,25 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+.MuiChip-filledSuccess {
+  background-color: hsl(143, 43%, 81%) !important;
+}
+.MuiChip-filledSuccess .MuiChip-label {
+  color: hsl(144, 72%, 21%) !important;
+}
+.MuiChip-filledError {
+  background-color: #ffdddd !important;
+}
+.MuiChip-filledError .MuiChip-label {
+  color: #d32f2f !important;
 }

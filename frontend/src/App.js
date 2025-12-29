@@ -1,7 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import db from "./firebaseConfig";
+
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Toolbar from "@mui/material/Toolbar";
 import { saveRound as saveGameRound } from "./gameservice";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import CardContent from "@mui/material/CardContent";
+import Button from "@mui/material/Button";
 
 export default function App() {
   const [status, setStatus] = useState("Idle");
@@ -86,9 +109,63 @@ export default function App() {
       span.classList.add("dark-green"); // below 9th "1"
     }
   });
+  // Table
+  const [data, setData] = useState({});
+  const [order, setOrder] = useState("desc"); // asc | desc
+  const today = new Date();
+  const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${today.getFullYear()}`;
+  const [selectDay, setSelectDay] = useState(formattedDate);
+  async function getData() {
+    try {
+      const docRef = doc(db, "Game", selectDay);
+      const snap = await getDoc(docRef);
 
+      if (snap.exists()) {
+        setData(snap.data());
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+  }
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const handleSort = () => {
+    setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  // 🔹 Sort by Time
+  const sortedData = useMemo(() => {
+    return Object.entries(data || {}).sort(([timeA], [timeB]) => {
+      const dateA = new Date(`1970/01/01 ${timeA}`);
+      const dateB = new Date(`1970/01/01 ${timeB}`);
+
+      return order === "asc" ? dateA - dateB : dateB - dateA;
+    });
+  }, [data, order]);
+  // Handling select day
+  const [docIds, setDocIds] = useState([]);
+  async function getAllDocIds() {
+    const colRef = collection(db, "Game");
+    const snapshot = await getDocs(colRef);
+
+    const docIds = snapshot.docs.map((doc) => doc.id);
+
+    console.log(docIds);
+    return docIds;
+  }
+
+  useEffect(() => {
+    getAllDocIds().then(setDocIds);
+  }, []);
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial" }}>
+    <div>
       <div style={{ flex: 4, padding: 20, borderRight: "1px solid #ccc" }}>
         <h2>Playwright Observer</h2>
         <p>
@@ -150,6 +227,139 @@ export default function App() {
           );
         })}
       </div>
+      <Card>
+        <CardActionArea
+          sx={{
+            height: "100%",
+            "&[data-active]": {
+              backgroundColor: "action.selected",
+              "&:hover": {
+                backgroundColor: "action.selectedHover",
+              },
+            },
+          }}
+        >
+          <CardContent sx={{ height: "100%" }}>
+            <Typography variant="h5" component="div">
+              Playwright Observer
+            </Typography>
+
+            <Button variant="contained" onClick={startObserver}>
+              Start Observer
+            </Button>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+      <TableContainer component={Paper}>
+        <Toolbar
+          sx={[
+            {
+              pl: { sm: 2 },
+              pr: { xs: 1, sm: 1 },
+              display: "flex",
+              justifyContent: "space-between",
+            },
+          ]}
+        >
+          <Typography variant="h6" align="left">
+            Daily Data
+          </Typography>
+          <FormControl sx={{ m: 1, minWidth: 120 }} size="small" align="right">
+            <InputLabel id="demo-select-small-label"> Day</InputLabel>
+            <Select
+              labelId="demo-select-small-label"
+              id="demo-select-small"
+              value={selectDay}
+              label="Day"
+              onChange={(e) => {
+                setSelectDay(e.target.value);
+              }}
+            >
+              {docIds.map((day) => {
+                return <MenuItem value={day}>{day}</MenuItem>;
+              })}
+            </Select>
+          </FormControl>
+        </Toolbar>
+        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <TableSortLabel active direction={order} onClick={handleSort}>
+                  Time
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>Data</TableCell>
+              <TableCell align="center">1st Element</TableCell>
+              <TableCell align="center">8th Win / Loss</TableCell>
+              <TableCell align="center">9th Win / Loss</TableCell>
+              <TableCell align="center">10th Win / Loss</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {sortedData.map(([groupTime, rounds]) => {
+              const eight = Object.values(rounds?.[9] ?? {})[0];
+              const ninth = Object.values(rounds?.[10] ?? {})[0];
+              const tenth = Object.values(rounds?.[11] ?? {})[0];
+
+              return (
+                <TableRow
+                  key={groupTime}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell>{groupTime}</TableCell>
+
+                  <TableCell style={{ display: "flex", flexWrap: "wrap" }}>
+                    {rounds.map((item, index) => {
+                      const time = Object.keys(item)[0];
+                      const value = Object.values(item)[0];
+
+                      return (
+                        <Tooltip key={index} title={time} placement="top">
+                          <Chip
+                            label={value}
+                            variant="outlined"
+                            sx={{ m: "2px" }}
+                          />
+                        </Tooltip>
+                      );
+                    })}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Tooltip
+                      title={Object.keys(rounds?.[1] ?? {})[0]}
+                      placement="top"
+                    >
+                      <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={eight}
+                      color={eight >= 2 ? "success" : "error"}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={ninth}
+                      color={ninth >= 2 ? "success" : "error"}
+                    />
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Chip
+                      label={tenth}
+                      color={tenth >= 2 ? "success" : "error"}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 }
