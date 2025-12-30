@@ -15,20 +15,20 @@ export const saveRound = async (dateStr, fullData) => {
   const snap = await getDoc(docRef);
   const currentTime = Object.keys(fullData[0])[0];
 
-  await updateDoc(docRef, {
-    [currentTime]: fullData, // ONLY current data
-  });
-  //   if (snap.exists()) {
-  //     await updateDoc(docRef, {
-  //       [currentTime]: fullData,
-  //     });
-  //     console.log("Document updated");
-  //   } else {
-  //     await setDoc(docRef, {
-  //       [currentTime]: fullData,
-  //     });
-  //     console.log("Document created");
-  //   }
+  // await updateDoc(docRef, {
+  //   [currentTime]: fullData, // ONLY current data
+  // });
+  if (snap.exists()) {
+    await updateDoc(docRef, {
+      [currentTime]: fullData,
+    });
+    console.log("Document updated");
+  } else {
+    await setDoc(docRef, {
+      [currentTime]: fullData,
+    });
+    console.log("Document created");
+  }
 
   // const docRef = doc(db, "Game", dateStr);
   // const snap = await getDoc(docRef);

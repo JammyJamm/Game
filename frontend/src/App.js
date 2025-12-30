@@ -25,7 +25,13 @@ import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Button from "@mui/material/Button";
-
+import Drawer from "@mui/material/Drawer";
+import Box from "@mui/material/Box";
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+import CardHeader from "@mui/material/CardHeader";
+import Grid from "@mui/material/Grid";
+import BrowserUpdatedIcon from "@mui/icons-material/BrowserUpdated";
+import IconButton from "@mui/material/IconButton";
 export default function App() {
   const [status, setStatus] = useState("Idle");
   const [rounds, setRounds] = useState([]);
@@ -164,16 +170,13 @@ export default function App() {
   useEffect(() => {
     getAllDocIds().then(setDocIds);
   }, []);
-  return (
-    <div>
-      <div style={{ flex: 4, padding: 20, borderRight: "1px solid #ccc" }}>
-        <h2>Playwright Observer</h2>
-        <p>
-          Status: <b>{status}</b>
-        </p>
-        <button onClick={startObserver}>Start Observer</button>
-      </div>
-
+  // Drawer
+  const [open, setOpen] = useState(false);
+  const toggleDrawer = (newOpen) => () => {
+    setOpen(newOpen);
+  };
+  const DrawerList = (
+    <Box sx={{ height: 250 }} role="presentation" onClick={toggleDrawer(false)}>
       <div
         style={{ flex: "6 1 0%", padding: 20, overflowY: "auto", width: "50%" }}
       >
@@ -227,139 +230,170 @@ export default function App() {
           );
         })}
       </div>
-      <Card>
-        <CardActionArea
-          sx={{
-            height: "100%",
-            "&[data-active]": {
-              backgroundColor: "action.selected",
-              "&:hover": {
-                backgroundColor: "action.selectedHover",
-              },
-            },
-          }}
-        >
-          <CardContent sx={{ height: "100%" }}>
-            <Typography variant="h5" component="div">
+    </Box>
+  );
+  return (
+    <Grid container spacing={2}>
+      <SwipeableDrawer
+        open={open}
+        anchor="bottom"
+        onClose={toggleDrawer(false)}
+      >
+        {DrawerList}
+      </SwipeableDrawer>
+      <Grid size={4}>
+        <Card sx={{ marginBottom: "15px" }}>
+          <Toolbar className="card-header">
+            <Typography variant="h6" align="left" className="card-title">
               Playwright Observer
             </Typography>
-
+            <IconButton aria-label="data" onClick={toggleDrawer(true)}>
+              <BrowserUpdatedIcon />
+            </IconButton>
+          </Toolbar>
+          <CardContent>
             <Button variant="contained" onClick={startObserver}>
               Start Observer
             </Button>
+            <p>
+              Status: <b>{status}</b>
+            </p>
           </CardContent>
-        </CardActionArea>
-      </Card>
-      <TableContainer component={Paper}>
-        <Toolbar
-          sx={[
-            {
-              pl: { sm: 2 },
-              pr: { xs: 1, sm: 1 },
-              display: "flex",
-              justifyContent: "space-between",
-            },
-          ]}
-        >
-          <Typography variant="h6" align="left">
-            Daily Data
-          </Typography>
-          <FormControl sx={{ m: 1, minWidth: 120 }} size="small" align="right">
-            <InputLabel id="demo-select-small-label"> Day</InputLabel>
-            <Select
-              labelId="demo-select-small-label"
-              id="demo-select-small"
-              value={selectDay}
-              label="Day"
-              onChange={(e) => {
-                setSelectDay(e.target.value);
-              }}
+        </Card>
+      </Grid>
+      <Grid size={4}>
+        <Card sx={{ marginBottom: "15px" }}>
+          <Toolbar
+            sx={[
+              {
+                pl: { sm: 2 },
+                pr: { xs: 1, sm: 1 },
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "baseline",
+              },
+            ]}
+          ></Toolbar>
+        </Card>
+      </Grid>
+      <Card sx={{ marginBottom: "15px" }}></Card>
+      <Card sx={{ marginBottom: "15px" }}>
+        <TableContainer component={Paper}>
+          <Toolbar
+            sx={[
+              {
+                pl: { sm: 2 },
+                pr: { xs: 1, sm: 1 },
+                display: "flex",
+                justifyContent: "space-between",
+                borderBottom: "1px solid rgba(130, 130, 130, 0.17)",
+              },
+            ]}
+          >
+            <Typography variant="h6" align="left" className="card-title">
+              Daily Data
+            </Typography>
+            <FormControl
+              sx={{ m: 1, minWidth: 120 }}
+              size="small"
+              align="right"
             >
-              {docIds.map((day) => {
-                return <MenuItem value={day}>{day}</MenuItem>;
+              <InputLabel id="demo-select-small-label"> Day</InputLabel>
+              <Select
+                labelId="demo-select-small-label"
+                id="demo-select-small"
+                value={selectDay}
+                label="Day"
+                onChange={(e) => {
+                  setSelectDay(e.target.value);
+                }}
+              >
+                {docIds.map((day) => {
+                  return <MenuItem value={day}>{day}</MenuItem>;
+                })}
+              </Select>
+            </FormControl>
+          </Toolbar>
+          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <TableSortLabel active direction={order} onClick={handleSort}>
+                    Time
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>Data</TableCell>
+                <TableCell align="center">1st Element</TableCell>
+                <TableCell align="center">8th Win / Loss</TableCell>
+                <TableCell align="center">9th Win / Loss</TableCell>
+                <TableCell align="center">10th Win / Loss</TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {sortedData.map(([groupTime, rounds]) => {
+                const eight = Object.values(rounds?.[9] ?? {})[0];
+                const ninth = Object.values(rounds?.[10] ?? {})[0];
+                const tenth = Object.values(rounds?.[11] ?? {})[0];
+
+                return (
+                  <TableRow
+                    key={groupTime}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell>{groupTime}</TableCell>
+
+                    <TableCell style={{ display: "flex", flexWrap: "wrap" }}>
+                      {rounds.map((item, index) => {
+                        const time = Object.keys(item)[0];
+                        const value = Object.values(item)[0];
+
+                        return (
+                          <Tooltip key={index} title={time} placement="top">
+                            <Chip
+                              label={value}
+                              variant="outlined"
+                              sx={{ m: "2px" }}
+                            />
+                          </Tooltip>
+                        );
+                      })}
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Tooltip
+                        title={Object.keys(rounds?.[1] ?? {})[0]}
+                        placement="top"
+                      >
+                        <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={eight}
+                        color={eight >= 2 ? "success" : "error"}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={ninth}
+                        color={ninth >= 2 ? "success" : "error"}
+                      />
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Chip
+                        label={tenth}
+                        color={tenth >= 2 ? "success" : "error"}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
               })}
-            </Select>
-          </FormControl>
-        </Toolbar>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel active direction={order} onClick={handleSort}>
-                  Time
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>Data</TableCell>
-              <TableCell align="center">1st Element</TableCell>
-              <TableCell align="center">8th Win / Loss</TableCell>
-              <TableCell align="center">9th Win / Loss</TableCell>
-              <TableCell align="center">10th Win / Loss</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {sortedData.map(([groupTime, rounds]) => {
-              const eight = Object.values(rounds?.[9] ?? {})[0];
-              const ninth = Object.values(rounds?.[10] ?? {})[0];
-              const tenth = Object.values(rounds?.[11] ?? {})[0];
-
-              return (
-                <TableRow
-                  key={groupTime}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell>{groupTime}</TableCell>
-
-                  <TableCell style={{ display: "flex", flexWrap: "wrap" }}>
-                    {rounds.map((item, index) => {
-                      const time = Object.keys(item)[0];
-                      const value = Object.values(item)[0];
-
-                      return (
-                        <Tooltip key={index} title={time} placement="top">
-                          <Chip
-                            label={value}
-                            variant="outlined"
-                            sx={{ m: "2px" }}
-                          />
-                        </Tooltip>
-                      );
-                    })}
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <Tooltip
-                      title={Object.keys(rounds?.[1] ?? {})[0]}
-                      placement="top"
-                    >
-                      <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={eight}
-                      color={eight >= 2 ? "success" : "error"}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={ninth}
-                      color={ninth >= 2 ? "success" : "error"}
-                    />
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <Chip
-                      label={tenth}
-                      color={tenth >= 2 ? "success" : "error"}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Grid>
   );
 }
