@@ -32,6 +32,9 @@ import CardHeader from "@mui/material/CardHeader";
 import Grid from "@mui/material/Grid";
 import BrowserUpdatedIcon from "@mui/icons-material/BrowserUpdated";
 import IconButton from "@mui/material/IconButton";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import Avatar from "@mui/material/Avatar";
+import LinearProgress from "@mui/material/LinearProgress";
 export default function App() {
   const [status, setStatus] = useState("Idle");
   const [rounds, setRounds] = useState([]);
@@ -241,159 +244,308 @@ export default function App() {
       >
         {DrawerList}
       </SwipeableDrawer>
-      <Grid size={4}>
-        <Card sx={{ marginBottom: "15px" }}>
-          <Toolbar className="card-header">
-            <Typography variant="h6" align="left" className="card-title">
-              Playwright Observer
-            </Typography>
-            <IconButton aria-label="data" onClick={toggleDrawer(true)}>
-              <BrowserUpdatedIcon />
-            </IconButton>
-          </Toolbar>
-          <CardContent>
-            <Button variant="contained" onClick={startObserver}>
-              Start Observer
-            </Button>
-            <p>
-              Status: <b>{status}</b>
-            </p>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid size={4}>
-        <Card sx={{ marginBottom: "15px" }}>
-          <Toolbar
-            sx={[
-              {
-                pl: { sm: 2 },
-                pr: { xs: 1, sm: 1 },
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "baseline",
-              },
-            ]}
-          ></Toolbar>
-        </Card>
-      </Grid>
-      <Card sx={{ marginBottom: "15px" }}></Card>
-      <Card sx={{ marginBottom: "15px" }}>
-        <TableContainer component={Paper}>
-          <Toolbar
-            sx={[
-              {
-                pl: { sm: 2 },
-                pr: { xs: 1, sm: 1 },
-                display: "flex",
-                justifyContent: "space-between",
-                borderBottom: "1px solid rgba(130, 130, 130, 0.17)",
-              },
-            ]}
-          >
-            <Typography variant="h6" align="left" className="card-title">
-              Daily Data
-            </Typography>
-            <FormControl
-              sx={{ m: 1, minWidth: 120 }}
-              size="small"
-              align="right"
-            >
-              <InputLabel id="demo-select-small-label"> Day</InputLabel>
-              <Select
-                labelId="demo-select-small-label"
-                id="demo-select-small"
-                value={selectDay}
-                label="Day"
-                onChange={(e) => {
-                  setSelectDay(e.target.value);
-                }}
-              >
-                {docIds.map((day) => {
-                  return <MenuItem value={day}>{day}</MenuItem>;
-                })}
-              </Select>
-            </FormControl>
-          </Toolbar>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <TableSortLabel active direction={order} onClick={handleSort}>
-                    Time
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>Data</TableCell>
-                <TableCell align="center">1st Element</TableCell>
-                <TableCell align="center">8th Win / Loss</TableCell>
-                <TableCell align="center">9th Win / Loss</TableCell>
-                <TableCell align="center">10th Win / Loss</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {sortedData.map(([groupTime, rounds]) => {
-                const eight = Object.values(rounds?.[9] ?? {})[0];
-                const ninth = Object.values(rounds?.[10] ?? {})[0];
-                const tenth = Object.values(rounds?.[11] ?? {})[0];
-
-                return (
-                  <TableRow
-                    key={groupTime}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+      <Grid container size={12}>
+        <Grid container size={9}>
+          <Grid size={4}>
+            <Card sx={{ marginBottom: "15px" }}>
+              <Toolbar className="card-header">
+                <Typography variant="h6" align="left" className="card-title">
+                  Playwright Observer
+                </Typography>
+                <IconButton aria-label="data" onClick={toggleDrawer(true)}>
+                  <BrowserUpdatedIcon />
+                </IconButton>
+              </Toolbar>
+              <CardContent>
+                <Button variant="contained" onClick={startObserver}>
+                  Start Observer
+                </Button>
+                <p>
+                  Status: <b>{status}</b>
+                </p>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={4}>
+            <Card sx={{ marginBottom: "15px" }}>
+              <Toolbar className="card-header">
+                <Typography variant="h6" align="left" className="card-title">
+                  Daily Data
+                </Typography>
+              </Toolbar>
+              <CardContent>
+                <Toolbar>
+                  <Avatar>
+                    <EmojiEventsIcon />
+                  </Avatar>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ fontWeight: "600" }}>
+                      3/10
+                    </Typography>
+                    <Typography variant="body2">
+                      Be calm to achive the target !
+                    </Typography>
+                  </CardContent>
+                </Toolbar>
+              </CardContent>
+              <CardContent sx={{ paddingTop: "0px" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    gutterBottom
+                    sx={{ display: "block" }}
                   >
-                    <TableCell>{groupTime}</TableCell>
+                    Today Invoice
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    gutterBottom
+                    sx={{ display: "block" }}
+                  >
+                    300/1000
+                  </Typography>
+                </div>
 
-                    <TableCell style={{ display: "flex", flexWrap: "wrap" }}>
-                      {rounds.map((item, index) => {
-                        const time = Object.keys(item)[0];
-                        const value = Object.values(item)[0];
+                <LinearProgress
+                  variant="determinate"
+                  value={60}
+                  sx={{
+                    borderRadius: 5,
+                    backgroundColor: "#e0e0e0",
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={4}>
+            <Card sx={{ marginBottom: "15px" }}>
+              <Toolbar className="card-header">
+                <Typography variant="h6" align="left" className="card-title">
+                  Payment Histroy
+                </Typography>
+              </Toolbar>
+              <CardContent>
+                <Toolbar>
+                  <Avatar>
+                    <EmojiEventsIcon />
+                  </Avatar>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ fontWeight: "600" }}>
+                      3/10
+                    </Typography>
+                    <Typography variant="body2">
+                      Be calm to achive the target !
+                    </Typography>
+                  </CardContent>
+                </Toolbar>
+              </CardContent>
+              <CardContent sx={{ paddingTop: "0px" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    gutterBottom
+                    sx={{ display: "block" }}
+                  >
+                    Today Invoice
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    gutterBottom
+                    sx={{ display: "block" }}
+                  >
+                    300/1000
+                  </Typography>
+                </div>
 
-                        return (
-                          <Tooltip key={index} title={time} placement="top">
-                            <Chip
-                              label={value}
-                              variant="outlined"
-                              sx={{ m: "2px" }}
-                            />
-                          </Tooltip>
-                        );
-                      })}
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Tooltip
-                        title={Object.keys(rounds?.[1] ?? {})[0]}
-                        placement="top"
+                <LinearProgress
+                  variant="determinate"
+                  value={60}
+                  sx={{
+                    borderRadius: 5,
+                    backgroundColor: "#e0e0e0",
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+        <Grid container size={3}>
+          <Card sx={{ marginBottom: "15px", width: "100%" }}>
+            <Toolbar className="card-header">
+              <Typography variant="h6" align="left" className="card-title">
+                Note
+              </Typography>
+            </Toolbar>
+            <CardContent>
+              <Toolbar>
+                <Avatar>
+                  <EmojiEventsIcon />
+                </Avatar>
+              </Toolbar>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+      <Grid container size={12}>
+        <Grid container size={9}>
+          <Card sx={{ marginBottom: "15px" }}>
+            <TableContainer component={Paper}>
+              <Toolbar
+                sx={[
+                  {
+                    pl: { sm: 2 },
+                    pr: { xs: 1, sm: 1 },
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderBottom: "1px solid rgba(130, 130, 130, 0.17)",
+                  },
+                ]}
+              >
+                <Typography variant="h6" align="left" className="card-title">
+                  Daily Data
+                </Typography>
+                <FormControl
+                  sx={{ m: 1, minWidth: 120 }}
+                  size="small"
+                  align="right"
+                >
+                  <InputLabel id="demo-select-small-label"> Day</InputLabel>
+                  <Select
+                    labelId="demo-select-small-label"
+                    id="demo-select-small"
+                    value={selectDay}
+                    label="Day"
+                    onChange={(e) => {
+                      setSelectDay(e.target.value);
+                    }}
+                  >
+                    {docIds.map((day) => {
+                      return <MenuItem value={day}>{day}</MenuItem>;
+                    })}
+                  </Select>
+                </FormControl>
+              </Toolbar>
+              <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <TableSortLabel
+                        active
+                        direction={order}
+                        onClick={handleSort}
                       >
-                        <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
-                      </Tooltip>
+                        Time
+                      </TableSortLabel>
                     </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={eight}
-                        color={eight >= 2 ? "success" : "error"}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={ninth}
-                        color={ninth >= 2 ? "success" : "error"}
-                      />
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Chip
-                        label={tenth}
-                        color={tenth >= 2 ? "success" : "error"}
-                      />
-                    </TableCell>
+                    <TableCell>Data</TableCell>
+                    <TableCell align="center">1st Element</TableCell>
+                    <TableCell align="center">8th Element</TableCell>
+                    <TableCell align="center">9th Element</TableCell>
+                    <TableCell align="center">10th Element</TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+                </TableHead>
+
+                <TableBody>
+                  {sortedData.map(([groupTime, rounds]) => {
+                    const eight = Object.values(rounds?.[9] ?? {})[0];
+                    const ninth = Object.values(rounds?.[10] ?? {})[0];
+                    const tenth = Object.values(rounds?.[11] ?? {})[0];
+
+                    return (
+                      <TableRow
+                        key={groupTime}
+                        sx={{
+                          "&:last-child td, &:last-child th": { border: 0 },
+                        }}
+                      >
+                        <TableCell>{groupTime}</TableCell>
+
+                        <TableCell
+                          style={{ display: "flex", flexWrap: "wrap" }}
+                        >
+                          {rounds.map((item, index) => {
+                            const time = Object.keys(item)[0];
+                            const value = Object.values(item)[0];
+
+                            return (
+                              <Tooltip key={index} title={time} placement="top">
+                                <Chip
+                                  label={value}
+                                  variant="outlined"
+                                  sx={{ m: "2px" }}
+                                />
+                              </Tooltip>
+                            );
+                          })}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <Tooltip
+                            title={Object.keys(rounds?.[1] ?? {})[0]}
+                            placement="top"
+                          >
+                            <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={eight}
+                            color={
+                              eight >= 1.8
+                                ? "success"
+                                : eight === 1
+                                ? "default"
+                                : "error"
+                            }
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={ninth}
+                            color={
+                              ninth >= 1.8
+                                ? "success"
+                                : ninth === 1
+                                ? "default"
+                                : "error"
+                            }
+                          />
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <Chip
+                            label={tenth}
+                            color={
+                              tenth >= 1.8
+                                ? "success"
+                                : tenth === 1
+                                ? "default"
+                                : "error"
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        </Grid>
+        <Grid container size={3}></Grid>
+      </Grid>
     </Grid>
   );
 }
