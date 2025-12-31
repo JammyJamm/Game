@@ -15,6 +15,10 @@ import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
+import Stepper from "@mui/material/Stepper";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
@@ -35,10 +39,14 @@ import IconButton from "@mui/material/IconButton";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import Avatar from "@mui/material/Avatar";
 import LinearProgress from "@mui/material/LinearProgress";
+import StepContent from "@mui/material/StepContent";
 export default function App() {
   const [status, setStatus] = useState("Idle");
   const [rounds, setRounds] = useState([]);
-
+  const today = new Date();
+  const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${today.getFullYear()}`;
   const startObserver = async () => {
     try {
       setStatus("Starting observer...");
@@ -121,10 +129,7 @@ export default function App() {
   // Table
   const [data, setData] = useState({});
   const [order, setOrder] = useState("desc"); // asc | desc
-  const today = new Date();
-  const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
-    today.getMonth() + 1
-  ).padStart(2, "0")}-${today.getFullYear()}`;
+
   const [selectDay, setSelectDay] = useState(formattedDate);
   async function getData() {
     try {
@@ -143,7 +148,7 @@ export default function App() {
 
   useEffect(() => {
     getData();
-  }, []);
+  }, [selectDay]);
 
   const handleSort = () => {
     setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -235,6 +240,88 @@ export default function App() {
       </div>
     </Box>
   );
+  // Note Data - Selecting time frame
+  const timeToMinutes = (timeStr) => {
+    const [time, modifier] = timeStr.split(" ");
+    let [h, m] = time.split(":").map(Number);
+
+    if (modifier === "PM" && h !== 12) h += 12;
+    if (modifier === "AM" && h === 12) h = 0;
+
+    return h * 60 + m;
+  };
+  const timeRanges = [
+    { label: "12:45 PM - 1:45 PM", start: "12:45 PM", end: "1:45 PM" },
+    { label: "1:45 PM - 2:45 PM", start: "1:45 PM", end: "2:45 PM" },
+    { label: "2:45 PM - 3:45 PM", start: "2:45 PM", end: "3:45 PM" },
+    { label: "3:45 PM - 4:45 PM", start: "3:45 PM", end: "4:45 PM" },
+    { label: "4:45 PM - 5:45 PM", start: "4:45 PM", end: "5:45 PM" },
+  ];
+  const analyzeTimeRanges = (data) => {
+    return timeRanges.map((range) => {
+      const startMin = timeToMinutes(range.start);
+      const endMin = timeToMinutes(range.end);
+      let oneHigher = 0;
+      let twoHigher = 0;
+      let threeHigher = 0;
+      let fourHigher = 0;
+      let fiveHigher = 0;
+      let sixHigher = 0;
+      let sevenHigher = 0;
+      let eightHigher = 0;
+      let ninthHigher = 0;
+      let tenthHigher = 0;
+      let elevenHigher = 0;
+      let tewelHigher = 0;
+      let total = 0;
+
+      Object.entries(data).forEach(([time, values]) => {
+        const currentMin = timeToMinutes(time);
+
+        if (currentMin >= startMin && currentMin < endMin) {
+          total++;
+          if (Object.values(values[0])[0] > 2) oneHigher++;
+          if (Object.values(values[1])[0] > 2) twoHigher++;
+          if (Object.values(values[2])[0] > 2) threeHigher++;
+          if (Object.values(values[3])[0] > 2) fourHigher++;
+          if (Object.values(values[4])[0] > 2) fiveHigher++;
+          if (Object.values(values[5])[0] > 2) sixHigher++;
+          if (Object.values(values[6])[0] > 2) sevenHigher++;
+          if (Object.values(values[7])[0] > 2) eightHigher++;
+          if (Object.values(values[8])[0] > 2) ninthHigher++;
+          if (Object.values(values[9])[0] > 2) tenthHigher++;
+          if (Object.values(values[10])[0] > 2) elevenHigher++;
+          if (Object.values(values[11])[0] > 2) tewelHigher++;
+        }
+      });
+
+      return {
+        range: range.label,
+        one: `${oneHigher}/${total}`,
+        two: `${twoHigher}/${total}`,
+        three: `${threeHigher}/${total}`,
+        four: `${fourHigher}/${total}`,
+        five: `${fiveHigher}/${total}`,
+        six: `${sixHigher}/${total}`,
+        seven: `${sevenHigher}/${total}`,
+        eight: `${eightHigher}/${total}`,
+        ninth: `${ninthHigher}/${total}`,
+        tenth: `${tenthHigher}/${total}`,
+        eleven: `${elevenHigher}/${total}`,
+        tewel: `${tewelHigher}/${total}`,
+      };
+    });
+  };
+  const report = useMemo(() => analyzeTimeRanges(data), [data]);
+  //console.log(data);
+  const [activeStep, setActiveStep] = useState(null);
+  const [price, setPrice] = useState("");
+  const diffMultiply = (value, price) => {
+    if (!value?.includes("/")) return 0;
+
+    const [a, b] = value.split("/").map(Number);
+    return isNaN(a) || isNaN(b) ? 0 : (a * 2 - b) * price;
+  };
   return (
     <Grid container spacing={2}>
       <SwipeableDrawer
@@ -244,307 +331,498 @@ export default function App() {
       >
         {DrawerList}
       </SwipeableDrawer>
-      <Grid container size={12}>
-        <Grid container size={9}>
-          <Grid size={4}>
-            <Card sx={{ marginBottom: "15px" }}>
-              <Toolbar className="card-header">
-                <Typography variant="h6" align="left" className="card-title">
-                  Playwright Observer
-                </Typography>
-                <IconButton aria-label="data" onClick={toggleDrawer(true)}>
-                  <BrowserUpdatedIcon />
-                </IconButton>
-              </Toolbar>
-              <CardContent>
-                <Button variant="contained" onClick={startObserver}>
-                  Start Observer
-                </Button>
-                <p>
-                  Status: <b>{status}</b>
-                </p>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={4}>
-            <Card sx={{ marginBottom: "15px" }}>
-              <Toolbar className="card-header">
-                <Typography variant="h6" align="left" className="card-title">
-                  Daily Data
-                </Typography>
-              </Toolbar>
-              <CardContent>
-                <Toolbar>
-                  <Avatar>
-                    <EmojiEventsIcon />
-                  </Avatar>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: "600" }}>
-                      3/10
-                    </Typography>
-                    <Typography variant="body2">
-                      Be calm to achive the target !
-                    </Typography>
-                  </CardContent>
+      <Grid container size={{ xs: 12, md: 9 }}>
+        <Grid container size={{ xs: 12, md: 12 }}>
+          <Grid container size={{ xs: 12, md: 12 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ marginBottom: "15px" }}>
+                <Toolbar className="card-header">
+                  <Typography variant="h6" align="left" className="card-title">
+                    Playwright Observer
+                  </Typography>
+                  <IconButton aria-label="data" onClick={toggleDrawer(true)}>
+                    <BrowserUpdatedIcon />
+                  </IconButton>
                 </Toolbar>
-              </CardContent>
-              <CardContent sx={{ paddingTop: "0px" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    gutterBottom
-                    sx={{ display: "block" }}
-                  >
-                    Today Invoice
+                <CardContent>
+                  <Button variant="contained" onClick={startObserver}>
+                    Start Observer
+                  </Button>
+                  <p>
+                    Status: <b>{status}</b>
+                  </p>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ marginBottom: "15px" }}>
+                <Toolbar className="card-header">
+                  <Typography variant="h6" align="left" className="card-title">
+                    Daily Data
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    gutterBottom
-                    sx={{ display: "block" }}
-                  >
-                    300/1000
-                  </Typography>
-                </div>
-
-                <LinearProgress
-                  variant="determinate"
-                  value={60}
-                  sx={{
-                    borderRadius: 5,
-                    backgroundColor: "#e0e0e0",
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={4}>
-            <Card sx={{ marginBottom: "15px" }}>
-              <Toolbar className="card-header">
-                <Typography variant="h6" align="left" className="card-title">
-                  Payment Histroy
-                </Typography>
-              </Toolbar>
-              <CardContent>
-                <Toolbar>
-                  <Avatar>
-                    <EmojiEventsIcon />
-                  </Avatar>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: "600" }}>
-                      3/10
-                    </Typography>
-                    <Typography variant="body2">
-                      Be calm to achive the target !
-                    </Typography>
-                  </CardContent>
                 </Toolbar>
-              </CardContent>
-              <CardContent sx={{ paddingTop: "0px" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    gutterBottom
-                    sx={{ display: "block" }}
-                  >
-                    Today Invoice
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    gutterBottom
-                    sx={{ display: "block" }}
-                  >
-                    300/1000
-                  </Typography>
-                </div>
-
-                <LinearProgress
-                  variant="determinate"
-                  value={60}
-                  sx={{
-                    borderRadius: 5,
-                    backgroundColor: "#e0e0e0",
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-        <Grid container size={3}>
-          <Card sx={{ marginBottom: "15px", width: "100%" }}>
-            <Toolbar className="card-header">
-              <Typography variant="h6" align="left" className="card-title">
-                Note
-              </Typography>
-            </Toolbar>
-            <CardContent>
-              <Toolbar>
-                <Avatar>
-                  <EmojiEventsIcon />
-                </Avatar>
-              </Toolbar>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      <Grid container size={12}>
-        <Grid container size={9}>
-          <Card sx={{ marginBottom: "15px" }}>
-            <TableContainer component={Paper}>
-              <Toolbar
-                sx={[
-                  {
-                    pl: { sm: 2 },
-                    pr: { xs: 1, sm: 1 },
-                    display: "flex",
-                    justifyContent: "space-between",
-                    borderBottom: "1px solid rgba(130, 130, 130, 0.17)",
-                  },
-                ]}
-              >
-                <Typography variant="h6" align="left" className="card-title">
-                  Daily Data
-                </Typography>
-                <FormControl
-                  sx={{ m: 1, minWidth: 120 }}
-                  size="small"
-                  align="right"
-                >
-                  <InputLabel id="demo-select-small-label"> Day</InputLabel>
-                  <Select
-                    labelId="demo-select-small-label"
-                    id="demo-select-small"
-                    value={selectDay}
-                    label="Day"
-                    onChange={(e) => {
-                      setSelectDay(e.target.value);
+                <CardContent>
+                  <Toolbar>
+                    <Avatar>
+                      <EmojiEventsIcon />
+                    </Avatar>
+                    <CardContent>
+                      <Typography variant="h6" sx={{ fontWeight: "600" }}>
+                        3/10
+                      </Typography>
+                      <Typography variant="body2">
+                        Be calm to achive the target !
+                      </Typography>
+                    </CardContent>
+                  </Toolbar>
+                </CardContent>
+                <CardContent sx={{ paddingTop: "0px" }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
                     }}
                   >
-                    {docIds.map((day) => {
-                      return <MenuItem value={day}>{day}</MenuItem>;
-                    })}
-                  </Select>
-                </FormControl>
-              </Toolbar>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <TableSortLabel
-                        active
-                        direction={order}
-                        onClick={handleSort}
-                      >
-                        Time
-                      </TableSortLabel>
-                    </TableCell>
-                    <TableCell>Data</TableCell>
-                    <TableCell align="center">1st Element</TableCell>
-                    <TableCell align="center">8th Element</TableCell>
-                    <TableCell align="center">9th Element</TableCell>
-                    <TableCell align="center">10th Element</TableCell>
-                  </TableRow>
-                </TableHead>
+                    <Typography
+                      variant="caption"
+                      gutterBottom
+                      sx={{ display: "block" }}
+                    >
+                      Today Invoice
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      gutterBottom
+                      sx={{ display: "block" }}
+                    >
+                      300/1000
+                    </Typography>
+                  </div>
 
-                <TableBody>
-                  {sortedData.map(([groupTime, rounds]) => {
-                    const eight = Object.values(rounds?.[9] ?? {})[0];
-                    const ninth = Object.values(rounds?.[10] ?? {})[0];
-                    const tenth = Object.values(rounds?.[11] ?? {})[0];
+                  <LinearProgress
+                    variant="determinate"
+                    value={60}
+                    sx={{
+                      borderRadius: 5,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ marginBottom: "15px" }}>
+                <Toolbar className="card-header">
+                  <Typography variant="h6" align="left" className="card-title">
+                    Payment Histroy
+                  </Typography>
+                </Toolbar>
+                <CardContent>
+                  <Toolbar>
+                    <Avatar>
+                      <EmojiEventsIcon />
+                    </Avatar>
+                    <CardContent>
+                      <Typography variant="h6" sx={{ fontWeight: "600" }}>
+                        3/10
+                      </Typography>
+                      <Typography variant="body2">
+                        Be calm to achive the target !
+                      </Typography>
+                    </CardContent>
+                  </Toolbar>
+                </CardContent>
+                <CardContent sx={{ paddingTop: "0px" }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      gutterBottom
+                      sx={{ display: "block" }}
+                    >
+                      Today Invoice
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      gutterBottom
+                      sx={{ display: "block" }}
+                    >
+                      300/1000
+                    </Typography>
+                  </div>
 
-                    return (
-                      <TableRow
-                        key={groupTime}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                        }}
-                      >
-                        <TableCell>{groupTime}</TableCell>
-
-                        <TableCell
-                          style={{ display: "flex", flexWrap: "wrap" }}
-                        >
-                          {rounds.map((item, index) => {
-                            const time = Object.keys(item)[0];
-                            const value = Object.values(item)[0];
-
-                            return (
-                              <Tooltip key={index} title={time} placement="top">
-                                <Chip
-                                  label={value}
-                                  variant="outlined"
-                                  sx={{ m: "2px" }}
-                                />
-                              </Tooltip>
-                            );
-                          })}
-                        </TableCell>
-
-                        <TableCell align="center">
-                          <Tooltip
-                            title={Object.keys(rounds?.[1] ?? {})[0]}
-                            placement="top"
-                          >
-                            <Chip label={Object.values(rounds?.[1] ?? {})[0]} />
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={eight}
-                            color={
-                              eight >= 1.8
-                                ? "success"
-                                : eight === 1
-                                ? "default"
-                                : "error"
-                            }
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={ninth}
-                            color={
-                              ninth >= 1.8
-                                ? "success"
-                                : ninth === 1
-                                ? "default"
-                                : "error"
-                            }
-                          />
-                        </TableCell>
-
-                        <TableCell align="center">
-                          <Chip
-                            label={tenth}
-                            color={
-                              tenth >= 1.8
-                                ? "success"
-                                : tenth === 1
-                                ? "default"
-                                : "error"
-                            }
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
+                  <LinearProgress
+                    variant="determinate"
+                    value={60}
+                    sx={{
+                      borderRadius: 5,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grid>
-        <Grid container size={3}></Grid>
+        <Grid container size={{ xs: 12, md: 12 }}>
+          <Grid container size={{ xs: 12, md: 12 }}>
+            <Card sx={{ marginBottom: "15px", width: "100%" }}>
+              <TableContainer component={Paper}>
+                <Toolbar
+                  sx={[
+                    {
+                      pl: { sm: 2 },
+                      pr: { xs: 1, sm: 1 },
+                      display: "flex",
+                      justifyContent: "space-between",
+                      borderBottom: "1px solid rgba(130, 130, 130, 0.17)",
+                    },
+                  ]}
+                >
+                  <Typography variant="h6" align="left" className="card-title">
+                    Daily Data
+                  </Typography>
+                  <FormControl
+                    sx={{ m: 1, minWidth: 120 }}
+                    size="small"
+                    align="right"
+                  >
+                    <InputLabel id="demo-select-small-label"> Day</InputLabel>
+                    <Select
+                      labelId="demo-select-small-label"
+                      id="demo-select-small"
+                      value={selectDay}
+                      label="Day"
+                      onChange={(e) => {
+                        setSelectDay(e.target.value);
+                      }}
+                    >
+                      {docIds.map((day) => {
+                        return <MenuItem value={day}>{day}</MenuItem>;
+                      })}
+                    </Select>
+                  </FormControl>
+                </Toolbar>
+                <Table sx={{ width: "100%" }} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        <TableSortLabel
+                          active
+                          direction={order}
+                          onClick={handleSort}
+                        >
+                          Time
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell>Data</TableCell>
+                      <TableCell align="center">Before 1st</TableCell>
+                      <TableCell align="center">1st Element</TableCell>
+                      <TableCell align="center">8th Element</TableCell>
+                      <TableCell align="center">9th Element</TableCell>
+                      <TableCell align="center">10th Element</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {sortedData.map(([groupTime, rounds]) => {
+                      const eight = Object.values(rounds?.[9] ?? {})[0];
+                      const ninth = Object.values(rounds?.[10] ?? {})[0];
+                      const tenth = Object.values(rounds?.[11] ?? {})[0];
+                      const eightToolTip = Object.keys(rounds?.[9] ?? {})[0];
+                      const ninthToolTip = Object.keys(rounds?.[10] ?? {})[0];
+                      const tenthToolTip = Object.keys(rounds?.[11] ?? {})[0];
+
+                      return (
+                        <TableRow
+                          key={groupTime}
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                        >
+                          <TableCell>{groupTime}</TableCell>
+
+                          <TableCell
+                            style={{ display: "flex", flexWrap: "wrap" }}
+                          >
+                            {rounds.map((item, index) => {
+                              const time = Object.keys(item)[0];
+                              const value = Object.values(item)[0];
+
+                              return (
+                                <Tooltip
+                                  key={index}
+                                  title={time}
+                                  placement="top"
+                                >
+                                  <Chip
+                                    label={value}
+                                    variant="outlined"
+                                    sx={{ m: "2px" }}
+                                  />
+                                </Tooltip>
+                              );
+                            })}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            <Tooltip
+                              title={Object.keys(rounds?.[0] ?? {})[0]}
+                              placement="top"
+                            >
+                              <Chip
+                                label={Object.values(rounds?.[0] ?? {})[0]}
+                              />
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Tooltip
+                              title={Object.keys(rounds?.[1] ?? {})[0]}
+                              placement="top"
+                            >
+                              <Chip
+                                label={Object.values(rounds?.[1] ?? {})[0]}
+                              />
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Tooltip title={eightToolTip} placement="top">
+                              <Chip
+                                label={eight}
+                                color={
+                                  eight >= 2
+                                    ? "success"
+                                    : eight === 1
+                                    ? "default"
+                                    : "error"
+                                }
+                              />
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Tooltip title={ninthToolTip} placement="top">
+                              <Chip
+                                label={ninth}
+                                color={
+                                  ninth >= 2
+                                    ? "success"
+                                    : ninth === 1
+                                    ? "default"
+                                    : "error"
+                                }
+                              />
+                            </Tooltip>
+                          </TableCell>
+
+                          <TableCell align="center">
+                            <Tooltip title={tenthToolTip} placement="top">
+                              <Chip
+                                label={tenth}
+                                color={
+                                  tenth >= 2
+                                    ? "success"
+                                    : tenth === 1
+                                    ? "default"
+                                    : "error"
+                                }
+                              />
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+          </Grid>
+          <Grid container size={3} xs={12}></Grid>
+        </Grid>
+      </Grid>
+      <Grid container size={{ xs: 12, md: 3 }}>
+        <Card sx={{ marginBottom: "15px", width: "100%" }}>
+          <Toolbar className="card-header">
+            <Typography variant="h6" align="left" className="card-title">
+              Note
+            </Typography>
+            <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+              <InputLabel id="demo-select-small-label"> Price</InputLabel>
+              <Select
+                labelId="demo-select-small-label"
+                id="demo-select-small"
+                value={price}
+                label="Price"
+                onChange={(e) => {
+                  setPrice(e.target.value);
+                }}
+                align="left"
+              >
+                <MenuItem value="1000">1000</MenuItem>;
+                <MenuItem value="2000">2000</MenuItem>;
+                <MenuItem value="3000">3000</MenuItem>;
+                <MenuItem value="5000">5000</MenuItem>;
+                <MenuItem value="10000">10000</MenuItem>;
+              </Select>
+            </FormControl>
+          </Toolbar>
+          <CardContent>
+            <Toolbar>
+              <Stepper orientation="vertical">
+                {report.map((r, index) => (
+                  <Step key={r.range} expanded>
+                    <StepLabel>{r.range}</StepLabel>
+
+                    {/* Always visible content */}
+                    <StepContent>
+                      {/* <Typography>
+                        1st : {r.one} -
+                        <Chip
+                          label={diffMultiply(r.one, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.one, price) > 2 ? "success" : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        2nd : {r.two}
+                        <Chip
+                          label={diffMultiply(r.two, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.two, price) > 2 ? "success" : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        3rd : {r.three}
+                        <Chip
+                          label={diffMultiply(r.three, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.three, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        4th : {r.four}
+                        <Chip
+                          label={diffMultiply(r.four, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.four, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        5th : {r.five}
+                        <Chip
+                          label={diffMultiply(r.five, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.five, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        6th : {r.six}
+                        <Chip
+                          label={diffMultiply(r.six, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.six, price) > 2 ? "success" : "error"
+                          }
+                        />
+                      </Typography> */}
+                      <Typography>
+                        7th : {r.seven}
+                        <Chip
+                          label={diffMultiply(r.seven, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.seven, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        8th : {r.eight}
+                        <Chip
+                          label={diffMultiply(r.eight, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.eight, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        9th : {r.ninth}
+                        <Chip
+                          label={diffMultiply(r.ninth, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.ninth, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        10th : {r.tenth}
+                        <Chip
+                          label={diffMultiply(r.tenth, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.one, price) > 2 ? "success" : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        11th : {r.eleven}
+                        <Chip
+                          label={diffMultiply(r.eleven, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.eleven, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                      <Typography>
+                        12th : {r.tewel}
+                        <Chip
+                          label={diffMultiply(r.tewel, price)}
+                          size="small"
+                          color={
+                            diffMultiply(r.tewel, price) > 2
+                              ? "success"
+                              : "error"
+                          }
+                        />
+                      </Typography>
+                    </StepContent>
+                  </Step>
+                ))}
+              </Stepper>
+            </Toolbar>
+          </CardContent>
+        </Card>
       </Grid>
     </Grid>
   );
