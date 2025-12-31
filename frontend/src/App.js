@@ -56,7 +56,34 @@ export default function App() {
       setStatus("Error");
     }
   };
-
+  let lastFirstElement = null; // store the first element of the last API call
+  const betTime = [
+    {
+      startTime: "12:45:00 PM",
+      endTime: "1:44:59 PM",
+      index: [5, 8],
+    },
+    {
+      startTime: "1:45:00 PM",
+      endTime: "2:45:59 PM",
+      index: [5],
+    },
+    {
+      startTime: "2:45:00 PM",
+      endTime: "3:44:59 PM",
+      index: [5],
+    },
+    {
+      startTime: "3:45:00 PM",
+      endTime: "4:44:59 PM",
+      index: [5],
+    },
+    {
+      startTime: "4:45:00 PM",
+      endTime: "5:44:59 PM",
+      index: [5],
+    },
+  ];
   const fetchRounds = async () => {
     // const today = new Date().toLocaleDateString("en-GB");
     try {
@@ -70,8 +97,15 @@ export default function App() {
         const timeArray = lastDateObj[dateKey];
         const today = dateKey.replace(/\//g, "-");
         // Slice 20 array - Condition check
+        const currentFirst = Object.keys(timeArray[0])[0];
+
         checkLast10ForOne(today, timeArray);
 
+        if (lastFirstElement !== currentFirst) {
+          if (timeArray) console.log("Working");
+          //handleClick();
+        }
+        lastFirstElement = currentFirst;
         // const lastEntry = timeArray[timeArray.length - 1];
         // const time = Object.keys(lastEntry)[0];
         // const value = lastEntry[time];
@@ -251,7 +285,11 @@ export default function App() {
     return h * 60 + m;
   };
   const timeRanges = [
-    { label: "12:45 PM - 1:45 PM", start: "12:45 PM", end: "1:45 PM" },
+    {
+      label: "12:45 PM - 1:45 PM - (5th & 8th)",
+      start: "12:45 PM",
+      end: "1:45 PM",
+    },
     { label: "1:45 PM - 2:45 PM", start: "1:45 PM", end: "2:45 PM" },
     { label: "2:45 PM - 3:45 PM", start: "2:45 PM", end: "3:45 PM" },
     { label: "3:45 PM - 4:45 PM", start: "3:45 PM", end: "4:45 PM" },
@@ -315,12 +353,21 @@ export default function App() {
   const report = useMemo(() => analyzeTimeRanges(data), [data]);
   //console.log(data);
   const [activeStep, setActiveStep] = useState(null);
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(1000);
   const diffMultiply = (value, price) => {
     if (!value?.includes("/")) return 0;
 
     const [a, b] = value.split("/").map(Number);
     return isNaN(a) || isNaN(b) ? 0 : (a * 2 - b) * price;
+  };
+  const percentage = (data) => {
+    return Math.round((+data.split("/")[0] / +data.split("/")[1]) * 100);
+  };
+  /// ---------------- Click Bet -------------------------///
+  const handleClick = async () => {
+    await fetch("http://localhost:9000/bet-click", {
+      method: "POST",
+    });
   };
   return (
     <Grid container spacing={2}>
@@ -470,7 +517,7 @@ export default function App() {
             </Grid>
           </Grid>
         </Grid>
-        <Grid container size={{ xs: 12, md: 12 }}>
+        <Grid container size={{ xs: 12, md: 12, height: "50vh" }}>
           <Grid container size={{ xs: 12, md: 12 }}>
             <Card sx={{ marginBottom: "15px", width: "100%" }}>
               <TableContainer component={Paper}>
@@ -523,7 +570,7 @@ export default function App() {
                       </TableCell>
                       <TableCell>Data</TableCell>
                       <TableCell align="center">Before 1st</TableCell>
-                      <TableCell align="center">1st Element</TableCell>
+                      <TableCell align="center">Target Element</TableCell>
                       <TableCell align="center">8th Element</TableCell>
                       <TableCell align="center">9th Element</TableCell>
                       <TableCell align="center">10th Element</TableCell>
@@ -645,8 +692,8 @@ export default function App() {
           <Grid container size={3} xs={12}></Grid>
         </Grid>
       </Grid>
-      <Grid container size={{ xs: 12, md: 3 }}>
-        <Card sx={{ marginBottom: "15px", width: "100%" }}>
+      <Grid container size={{ xs: 12, md: 3, height: "50vh" }}>
+        <Card sx={{ marginBottom: "15px", width: "100%", height: "50%" }}>
           <Toolbar className="card-header">
             <Typography variant="h6" align="left" className="card-title">
               Note
@@ -672,150 +719,429 @@ export default function App() {
             </FormControl>
           </Toolbar>
           <CardContent>
-            <Toolbar>
-              <Stepper orientation="vertical">
+            <Toolbar sx={{ width: "100%" }}>
+              <Stepper orientation="vertical" sx={{ width: "100%" }}>
                 {report.map((r, index) => (
                   <Step key={r.range} expanded>
                     <StepLabel>{r.range}</StepLabel>
 
                     {/* Always visible content */}
                     <StepContent>
-                      {/* <Typography>
-                        1st : {r.one} -
-                        <Chip
-                          label={diffMultiply(r.one, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.one, price) > 2 ? "success" : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        2nd : {r.two}
-                        <Chip
-                          label={diffMultiply(r.two, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.two, price) > 2 ? "success" : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        3rd : {r.three}
-                        <Chip
-                          label={diffMultiply(r.three, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.three, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        4th : {r.four}
-                        <Chip
-                          label={diffMultiply(r.four, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.four, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        5th : {r.five}
-                        <Chip
-                          label={diffMultiply(r.five, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.five, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        6th : {r.six}
-                        <Chip
-                          label={diffMultiply(r.six, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.six, price) > 2 ? "success" : "error"
-                          }
-                        />
-                      </Typography> */}
-                      <Typography>
-                        7th : {r.seven}
-                        <Chip
-                          label={diffMultiply(r.seven, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.seven, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        8th : {r.eight}
-                        <Chip
-                          label={diffMultiply(r.eight, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.eight, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        9th : {r.ninth}
-                        <Chip
-                          label={diffMultiply(r.ninth, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.ninth, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        10th : {r.tenth}
-                        <Chip
-                          label={diffMultiply(r.tenth, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.one, price) > 2 ? "success" : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        11th : {r.eleven}
-                        <Chip
-                          label={diffMultiply(r.eleven, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.eleven, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
-                      <Typography>
-                        12th : {r.tewel}
-                        <Chip
-                          label={diffMultiply(r.tewel, price)}
-                          size="small"
-                          color={
-                            diffMultiply(r.tewel, price) > 2
-                              ? "success"
-                              : "error"
-                          }
-                        />
-                      </Typography>
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            5 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.seven}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.seven)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.seven)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.seven, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.seven, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            6 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.eight}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.eight)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.eight)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.eight, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.eight, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            7 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.ninth}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.ninth)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.ninth)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.ninth, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.ninth, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            8 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.tenth}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.tenth)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.tenth)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.tenth, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.tenth, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            9 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.eleven}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.eleven)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.eleven)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.eleven, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.eleven, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
+
+                      <Toolbar
+                        sx={{
+                          width: "90%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          backgroundColor: "#eff5fe",
+                          borderRadius: "50px",
+                          minHeight: "auto !important",
+                          padding: "2px 6px !important",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <Typography>
+                          <Avatar sx={{ fontSize: "12px", color: "primary" }}>
+                            10 <sub>th</sub>
+                          </Avatar>
+                        </Typography>
+                        <Toolbar
+                          sx={{
+                            width: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            backgroundColor: "#eff5fe",
+                            borderRadius: "50px",
+                            minHeight: "auto !important",
+                            padding: " 2px 16px !important",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            gutterBottom
+                            sx={{ display: "block" }}
+                          >
+                            {r.tewel}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage(r.tewel)}
+                            sx={{
+                              width: "100%",
+                              height: "5px",
+                              borderRadius: 5,
+                              backgroundColor: "#e0e0e0",
+                            }}
+                          />
+                        </Toolbar>
+                        <Toolbar
+                          sx={{
+                            width: "20%",
+                            padding: "6px 6px !important",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            minHeight: "auto !important",
+                          }}
+                        >
+                          <Typography sx={{ marginRight: "10px" }}>
+                            {percentage(r.tewel)}%
+                          </Typography>
+                          <Chip
+                            label={diffMultiply(r.tewel, price)}
+                            size="small"
+                            color={
+                              diffMultiply(r.tewel, price) > 2
+                                ? "success"
+                                : "error"
+                            }
+                          />
+                        </Toolbar>
+                      </Toolbar>
                     </StepContent>
                   </Step>
                 ))}
