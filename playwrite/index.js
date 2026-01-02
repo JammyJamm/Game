@@ -13,18 +13,18 @@ let roundHistory = [];
 let browser;
 let page;
 
-/* Find Aviator iframe safely */
+/* ✅ CORRECT WAY TO GET AVIATOR IFRAME */
 async function getGameFrame() {
-  return page
-    ?.frames()
-    .find(
-      (f) =>
-        f.name() === "game_place_game" ||
-        f.url().includes("crash.aviator.studio")
-    );
+  const iframeHandle = await page.waitForSelector(
+    'iframe[src*="spribegaming.com/aviator"]',
+    { timeout: 0 }
+  );
+
+  const frame = await iframeHandle.contentFrame();
+  return frame;
 }
 
-/* Launch browser */
+/* ---------------- LAUNCH BROWSER ---------------- */
 (async () => {
   browser = await chromium.launch({ headless: false });
   page = await browser.newPage();
@@ -37,9 +37,9 @@ async function getGameFrame() {
       day = { [date]: [] };
       roundHistory.unshift(day);
     }
+
     day[date].push({ [time]: value });
 
-    // optional limit
     if (day[date].length > 200) day[date].shift();
   });
 
@@ -53,82 +53,79 @@ async function getGameFrame() {
 /* ---------------- START OBSERVER ---------------- */
 app.post("/click-button", async (req, res) => {
   try {
-    /* wait for iframe */
-    let frame = null;
-    for (let i = 0; i < 40; i++) {
-      frame = await getGameFrame();
-      if (frame) break;
-      await new Promise((r) => setTimeout(r, 500));
+    const frame = await getGameFrame();
+    if (!frame) {
+      return res.json({ success: false, error: "Iframe not ready" });
     }
-
-    if (!frame) return res.json({ success: false, error: "Iframe not ready" });
 
     const started = await frame.evaluate(async () => {
       function sleep(ms) {
         return new Promise((r) => setTimeout(r, ms));
       }
 
-      /* wait for container */
+      /* 🔎 WAIT FOR PAYOUT CONTAINER */
       let container = null;
-      for (let i = 0; i < 40; i++) {
-        container = document.querySelector("div._items_7l84e_35");
+      for (let i = 0; i < 60; i++) {
+        container =
+          document.querySelector(".payouts-block") ||
+          document.querySelector('[class*="payouts"]') ||
+          document.querySelector('[class*="payout"]');
+
         if (container) break;
         await sleep(500);
       }
-      if (!container) return false;
+
+      if (!container) {
+        console.log("❌ payouts container not found");
+        return false;
+      }
 
       if (window.__observerStarted) return true;
       window.__observerStarted = true;
 
-      /* capture last existing value once */
-      const lastSpan = container.querySelector("button:last-child span");
-      if (lastSpan) {
-        const v = parseFloat(lastSpan.textContent.trim());
-        if (!isNaN(v)) {
-          const now = new Date();
-          window.__pushRound({
-            date: now.toLocaleDateString("en-GB"),
-            time: now.toLocaleTimeString("en-US"),
-            value: v,
-          });
-        }
+      let lastValue = null;
+
+      function extractValue(el) {
+        const txt = el?.textContent?.replace("x", "").trim();
+        const num = parseFloat(txt);
+        return isNaN(num) ? null : num;
       }
 
-      /* REAL observer (handles reused DOM nodes) */
+      function pushIfNew(val) {
+        if (val === null || val === lastValue) return;
+        lastValue = val;
+
+        const now = new Date();
+        window.__pushRound({
+          date: now.toLocaleDateString("en-GB"),
+          time: now.toLocaleTimeString("en-US"),
+          value: val,
+        });
+      }
+
+      /* 🟢 CAPTURE LAST EXISTING PAYOUT */
+      const existing = container.querySelectorAll('[class*="payout"]');
+      if (existing.length) {
+        pushIfNew(extractValue(existing[existing.length - 1]));
+      }
+
+      /* 👀 OBSERVE DOM CHANGES */
       const observer = new MutationObserver((mutations) => {
         for (const m of mutations) {
-          /* new button added */
-          for (const node of m.addedNodes) {
-            if (node.nodeType === 1) {
-              const span = node.querySelector?.("span");
-              if (span) {
-                const v = parseFloat(span.textContent.trim());
-                if (!isNaN(v)) {
-                  const now = new Date();
-                  window.__pushRound({
-                    date: now.toLocaleDateString("en-GB"),
-                    time: now.toLocaleTimeString("en-US"),
-                    value: v,
-                  });
-                  return;
-                }
+          if (m.type === "childList") {
+            for (const node of m.addedNodes) {
+              const v = extractValue(node);
+              if (v !== null) {
+                pushIfNew(v);
+                return;
               }
             }
           }
 
-          /* text updated in reused span */
-          if (
-            m.type === "characterData" &&
-            m.target.parentElement?.tagName === "SPAN"
-          ) {
-            const v = parseFloat(m.target.textContent.trim());
-            if (!isNaN(v)) {
-              const now = new Date();
-              window.__pushRound({
-                date: now.toLocaleDateString("en-GB"),
-                time: now.toLocaleTimeString("en-US"),
-                value: v,
-              });
+          if (m.type === "characterData") {
+            const v = extractValue(m.target.parentElement);
+            if (v !== null) {
+              pushIfNew(v);
               return;
             }
           }
@@ -141,10 +138,13 @@ app.post("/click-button", async (req, res) => {
         characterData: true,
       });
 
+      console.log("✅ Aviator observer started");
       return true;
     });
 
-    if (!started) return res.json({ success: false, error: "Game not ready" });
+    if (!started) {
+      return res.json({ success: false, error: "Game not ready" });
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -152,16 +152,17 @@ app.post("/click-button", async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 });
-/* ---------------- Bet Click ---------------- */
+
+/* ---------------- BET CLICK ---------------- */
 app.post("/bet-click", async (req, res) => {
   try {
-    const frame = page
-      .frames()
-      .find((f) => f.url().includes("crash.aviator.studio"));
+    const frame = await getGameFrame();
+    if (!frame) {
+      return res.json({ success: false, error: "Iframe not found" });
+    }
 
-    if (!frame) return res.json({ success: false, error: "Iframe not found" });
-
-    await frame.click("button._button_304lu_21");
+    /* ⚠️ Button selector may change */
+    await frame.click("button");
 
     res.json({ success: true });
   } catch (err) {
@@ -176,12 +177,8 @@ app.get("/round-history", (req, res) => {
 
 /* ---------------- SERVER ---------------- */
 const PORT = process.env.PORT || 9000;
-app.listen(PORT, () =>
-  console.log(`🚀Backend running on http://localhost:${PORT}`)
-);
-
-// app.listen(9000, () =>
-//   console.log("🚀 Backend running on http://localhost:9000")
-// );
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+});
 
 process.on("unhandledRejection", console.error);

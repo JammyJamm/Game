@@ -101,11 +101,6 @@ export default function App() {
 
         checkLast10ForOne(today, timeArray);
 
-        if (lastFirstElement !== currentFirst) {
-          if (timeArray) console.log("Working");
-          //handleClick();
-        }
-        lastFirstElement = currentFirst;
         // const lastEntry = timeArray[timeArray.length - 1];
         // const time = Object.keys(lastEntry)[0];
         // const value = lastEntry[time];
@@ -115,6 +110,18 @@ export default function App() {
         const firstStr = ele10.toString().split(".")[1]?.length || 0;
         const getCompArr = timeArray.slice(-12);
         if (firstStr === 1) saveGameRound(today, getCompArr);
+        /// Onclick condition
+
+        if (lastFirstElement !== currentFirst) {
+          const targetEle = Object.values(timeArray[timeArray.length[5]])[0];
+
+          if (targetEle.toString().split(".")[1]?.length || 0 === 1) {
+            console.log(Object.values(timeArray[0])[0]);
+            console.log("Working");
+          }
+          //handleClick();
+        }
+        lastFirstElement = currentFirst;
       }
     } catch {}
   };
@@ -167,7 +174,7 @@ export default function App() {
   const [selectDay, setSelectDay] = useState(formattedDate);
   async function getData() {
     try {
-      const docRef = doc(db, "Game", selectDay);
+      const docRef = doc(db, "NewGame", selectDay);
       const snap = await getDoc(docRef);
 
       if (snap.exists()) {
@@ -200,7 +207,7 @@ export default function App() {
   // Handling select day
   const [docIds, setDocIds] = useState([]);
   async function getAllDocIds() {
-    const colRef = collection(db, "Game");
+    const colRef = collection(db, "NewGame");
     const snapshot = await getDocs(colRef);
 
     const docIds = snapshot.docs.map((doc) => doc.id);
@@ -222,7 +229,7 @@ export default function App() {
       <div
         style={{ flex: "6 1 0%", padding: 20, overflowY: "auto", width: "50%" }}
       >
-        {rounds.length === 0 && <p>No data yet</p>}
+        {rounds.length === 0 && <div>No data yet</div>}
 
         {rounds.map((day, i) => {
           const date = Object.keys(day)[0];
@@ -290,9 +297,13 @@ export default function App() {
       start: "12:45 PM",
       end: "1:45 PM",
     },
-    { label: "1:45 PM - 2:45 PM", start: "1:45 PM", end: "2:45 PM" },
-    { label: "2:45 PM - 3:45 PM", start: "2:45 PM", end: "3:45 PM" },
-    { label: "3:45 PM - 4:45 PM", start: "3:45 PM", end: "4:45 PM" },
+    { label: "1:45 PM - 2:45 PM - (Ignore)", start: "1:45 PM", end: "2:45 PM" },
+    { label: "2:45 PM - 3:45 PM - (6th)", start: "2:45 PM", end: "3:45 PM" },
+    {
+      label: "3:45 PM - 4:45 PM - (6th)",
+      start: "3:45 PM",
+      end: "4:45 PM",
+    },
     { label: "4:45 PM - 5:45 PM", start: "4:45 PM", end: "5:45 PM" },
   ];
   const analyzeTimeRanges = (data) => {
@@ -692,8 +703,14 @@ export default function App() {
           <Grid container size={3} xs={12}></Grid>
         </Grid>
       </Grid>
-      <Grid container size={{ xs: 12, md: 3, height: "50vh" }}>
-        <Card sx={{ marginBottom: "15px", width: "100%", height: "50%" }}>
+      <Grid container size={{ xs: 12, md: 3 }} sx={{ height: "100vh" }}>
+        <Card
+          sx={{
+            marginBottom: "15px",
+            width: "100%",
+            height: "100%",
+          }}
+        >
           <Toolbar className="card-header">
             <Typography variant="h6" align="left" className="card-title">
               Note
@@ -718,7 +735,12 @@ export default function App() {
               </Select>
             </FormControl>
           </Toolbar>
-          <CardContent>
+          <CardContent
+            style={{
+              height: "100%",
+              overflowY: "auto",
+            }}
+          >
             <Toolbar sx={{ width: "100%" }}>
               <Stepper orientation="vertical" sx={{ width: "100%" }}>
                 {report.map((r, index) => (

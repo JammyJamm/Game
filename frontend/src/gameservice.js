@@ -11,7 +11,7 @@ import {
 
 export const saveRound = async (dateStr, fullData) => {
   //const dateId = getTodayDateId();
-  const docRef = doc(db, "Game", dateStr);
+  const docRef = doc(db, "NewGame", dateStr);
   const snap = await getDoc(docRef);
   const currentTime = Object.keys(fullData[0])[0];
 
